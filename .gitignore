@@ -16,4 +16,5 @@ bin/
 # mod dependencies & artifacts (do not commit binaries)
 libs/
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 _sfm_src/

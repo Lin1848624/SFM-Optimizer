@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.sfm_optimizer.mixin",
+  "refmap": "sfm_optimizer.refmap.json",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "RoundRobinMixin",
+    "OutputStatementMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
