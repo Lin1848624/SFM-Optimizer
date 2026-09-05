@@ -1,0 +1,19 @@
+# gradle / build
+.gradle/
+build/
+run/
+out/
+
+# ide
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+bin/
+
+# mod dependencies & artifacts (do not commit binaries)
+libs/
+*.jar
+_sfm_src/
