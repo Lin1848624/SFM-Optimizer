@@ -11,6 +11,8 @@ import ca.teamdman.sfml.ast.OutputStatement;
 import com.sfm_optimizer.SFMOptimizer;
 import com.sfm_optimizer.config.SFMOptimizerConfig;
 import com.sfm_optimizer.transfer.EvenSplitMath;
+import com.sfm_optimizer.transfer.SlotKey;
+import com.sfm_optimizer.transfer.TransferMemoryStore;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -32,6 +34,9 @@ public abstract class OutputStatementMixin {
     @Shadow(remap = false)
     public abstract void gatherSlots(ProgramContext context, Consumer<LimitedOutputSlot<?, ?, ?>> slotConsumer);
 
+    private static final TransferMemoryStore<SlotKey> MEMORY = new TransferMemoryStore<>();
+    private static final int KIND_OUTPUT = 1;
+
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true, remap = false)
     private void sfmopt$tick(ProgramContext context, CallbackInfo ci) {
         if (!SFMOptimizerConfig.ENABLE_EVEN_SPLIT.get()) return;
@@ -42,6 +47,8 @@ public abstract class OutputStatementMixin {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private void runEvenSplit(ProgramContext context) {
+        long now = context.getManager().getLevel().getGameTime();
+
         ArrayDeque<LimitedInputSlot> inputs = new ArrayDeque<>();
         for (InputStatement in : context.getInputs()) {
             in.gatherSlots(context, inputs::add);
@@ -68,7 +75,9 @@ public abstract class OutputStatementMixin {
 
             List<LimitedOutputSlot> dst = new ArrayList<>();
             for (LimitedOutputSlot o : outputs) {
-                if (!o.isDone() && o.type.equals(type)) dst.add(o);
+                if (o.isDone() || !o.type.equals(type)) continue;
+                if (SFMOptimizerConfig.ENABLE_SLOT_MEMORY.get() && MEMORY.isAsleep(keyOf(o), now)) continue;
+                dst.add(o);
             }
             if (dst.isEmpty()) continue;
 
@@ -95,9 +104,23 @@ public abstract class OutputStatementMixin {
                     if (remaining <= 0) break;
                     remaining -= moveUpTo(context, in, o, remaining);
                 }
+
+                SlotKey key = keyOf(o);
+                long after = type.getAmount(o.getStackInSlot());
+                long space = type.getMaxStackSizeForSlot(o.handler, o.slot) - after;
+                if (space <= 0) {
+                    MEMORY.sleep(key, now, SFMOptimizerConfig.SLEEP_COOLDOWN_TICKS.get());
+                } else {
+                    MEMORY.wake(key);
+                    if (SFMOptimizerConfig.ENABLE_SLOT_MEMORY.get()) MEMORY.rememberSlot(key, o.slot);
+                }
             }
         }
         LimitedOutputSlotObjectPool.release(outputs);
+    }
+
+    private static SlotKey keyOf(LimitedOutputSlot o) {
+        return new SlotKey(o.label.name(), o.pos.asLong(), o.direction.get3DDataValue(), o.slot, KIND_OUTPUT);
     }
 
     /** 复刻 SFM moveTo 的核心逻辑，但增加 maxAmount 上限并返回实际移动量。 */
