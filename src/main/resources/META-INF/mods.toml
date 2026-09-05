@@ -5,6 +5,8 @@ loaderVersion="[47,)"
 modId="sfm_optimizer"
 version="1.0.0"
 displayName="Super Factory Manager Optimizer"
+description="Optimizes Super Factory Manager (SFM) transfer logic: even-split for ROUND ROBIN and smart sleep/slot memory."
+license="All Rights Reserved"
 
 [[dependencies.sfm_optimizer]]
 modId="forge"
