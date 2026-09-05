@@ -76,7 +76,10 @@ public abstract class OutputStatementMixin {
             List<LimitedOutputSlot> dst = new ArrayList<>();
             for (LimitedOutputSlot o : outputs) {
                 if (o.isDone() || !o.type.equals(type)) continue;
-                if (SFMOptimizerConfig.ENABLE_SLOT_MEMORY.get() && MEMORY.isAsleep(keyOf(o), now)) continue;
+                if (SFMOptimizerConfig.ENABLE_SLOT_MEMORY.get()) {
+                    SlotKey key = keyOf(o);
+                    if (key != null && MEMORY.isAsleep(key, now)) continue;
+                }
                 dst.add(o);
             }
             if (dst.isEmpty()) continue;
@@ -106,6 +109,7 @@ public abstract class OutputStatementMixin {
                 }
 
                 SlotKey key = keyOf(o);
+                if (key == null) continue;
                 long after = type.getAmount(o.getStackInSlot());
                 long space = type.getMaxStackSizeForSlot(o.handler, o.slot) - after;
                 if (space <= 0) {
@@ -119,7 +123,13 @@ public abstract class OutputStatementMixin {
         LimitedOutputSlotObjectPool.release(outputs);
     }
 
+    /**
+     * 为休眠/槽位记忆构建稳定键。
+     * SFM 允许某些输出槽没有方向（例如标签指向 Manager 自身 / 内部 buffer），
+     * 此时返回 null，调用方应跳过休眠与记忆逻辑（原生 moveTo 不依赖 direction）。
+     */
     private static SlotKey keyOf(LimitedOutputSlot o) {
+        if (o.direction == null || o.label == null) return null;
         return new SlotKey(o.label.name(), o.pos.asLong(), o.direction.get3DDataValue(), o.slot, KIND_OUTPUT);
     }
 
