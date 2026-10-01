@@ -1,3 +1,23 @@
+1.1.0（NeoForge 1.21.1 移植版）
+==============================
+- 构建系统：ForgeGradle 6 → ModDevGradle 2.0.148，Java 17 → 21，NeoForge 21.1.252
+- 元数据：META-INF/mods.toml → META-INF/neoforge.mods.toml（依赖改为 type=required，含 neoforge/minecraft/sfm）
+- 资源包格式：pack_format 15 → 34
+- Mixin：移除 refmap（NeoForge 运行时使用官方映射名），compatibilityLevel → JAVA_21
+- 代码：主类与配置注册迁移到 NeoForge API（ModContainer#registerConfig、ModConfigSpec）
+- 兼容性：javap 逐类比对确认 SFM 4.34.0 在 1.20.1 与 1.21.1 平台的目标类签名一致，均分/休眠/槽位记忆逻辑不变
+- 验证：gradlew build 通过，单元测试 9/9 通过；实机测试步骤见 D:\Codex\Outputs 的移植说明
+
+1.0.0（Forge 1.20.1）
+=====================
+- ROUND ROBIN 每 tick 数学均分到所有目标
+- 智能休眠与槽位记忆
+- 详见 main 分支
+
+---
+
+（以下为原 Forge MDK changelog，保留备查）
+
 1.20.1 Changelog
 47.3
 ====
