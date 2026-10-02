@@ -4,6 +4,7 @@ import ca.teamdman.sfm.common.program.LimitedInputSlot;
 import ca.teamdman.sfm.common.program.LimitedOutputSlot;
 import ca.teamdman.sfm.common.program.LimitedOutputSlotObjectPool;
 import ca.teamdman.sfm.common.program.ProgramContext;
+import ca.teamdman.sfm.common.program.SimulateExploreAllPathsProgramBehaviour;
 import ca.teamdman.sfm.common.resourcetype.ResourceType;
 import ca.teamdman.sfml.ast.InputStatement;
 import ca.teamdman.sfml.ast.LabelAccess;
@@ -41,8 +42,25 @@ public abstract class OutputStatementMixin {
     private void sfmopt$tick(ProgramContext context, CallbackInfo ci) {
         if (!SFMOptimizerConfig.ENABLE_EVEN_SPLIT.get()) return;
         if (!labelAccess().roundRobin().isEnabled()) return; // 非轮询走原生贪心
+        if (!canRunEvenSplit(context)) return; // 模拟/检查器路径必须放行给原版
         runEvenSplit(context);
         ci.cancel();
+    }
+
+    /**
+     * 判断当前上下文能否执行真实的均分传输。
+     *
+     * <p>SFM 的检查器（如 {@code IncompleteIOProgramLinter#gatherWarnings}）会用
+     * {@code ProgramContext#createSimulationContext} 构造一个<strong>没有 manager</strong> 的上下文，
+     * 再调用 {@code Program#tick} 来收集警告。原版 {@code OutputStatement#tick} 在这种上下文里
+     * 会把语句交给 {@link SimulateExploreAllPathsProgramBehaviour} 后提前返回，
+     * 而本 mixin 注入在 HEAD，若不放行就会真的执行传输，并在
+     * {@code context.getManager().getLevel()} 处空指针（1.21.1 版对应崩溃见
+     * crash-2026-10-02_10.20.00-server.txt，此修复与 1.1.1 分支同步）。
+     */
+    private static boolean canRunEvenSplit(ProgramContext context) {
+        if (context.getManager() == null) return false;
+        return !(context.getBehaviour() instanceof SimulateExploreAllPathsProgramBehaviour);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
