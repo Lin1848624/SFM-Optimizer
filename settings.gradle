@@ -1,10 +1,25 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        maven { url = 'https://maven.minecraftforge.net/' }
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+        maven {
+            name = 'NeoForged'
+            url = 'https://maven.neoforged.net/releases'
+        }
     }
 }
+
 plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
+    // 允许 Gradle 在缺少 JDK 时自动下载工具链（本项目用本机 Java 21）
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
 }
+
+// 注意：本机 ~/.gradle/init.gradle 会在 settingsEvaluated 阶段清空 pluginManagement 仓库，
+// 因此这里在该回调之后重新补上 NeoForged 仓库，避免插件及其依赖解析失败。
+gradle.settingsEvaluated { settings ->
+    settings.pluginManagement.repositories.maven {
+        name = 'NeoForged'
+        url = 'https://maven.neoforged.net/releases'
+    }
+}
+
+rootProject.name = 'sfm_optimizer'
