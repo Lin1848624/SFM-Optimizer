@@ -5,6 +5,36 @@ All notable changes to this project are documented in this file.
 Each entry is written in English first, followed by Chinese.
 
 -------------------------------------------------------------------------------
+v1.1.1 — NeoForge 1.21.1
+-------------------------------------------------------------------------------
+
+[English]
+
+Fixed
+- Crash (NullPointerException at OutputStatement#runEvenSplit) while a manager
+  rebuilt its program and updated the disk: SFM's linter ticks the program with
+  a simulation context that has no manager (ProgramContext#createSimulationContext
+  from IncompleteIOProgramLinter). Vanilla OutputStatement#tick returns early for
+  such contexts, but the HEAD injection took over before that check. The mixin
+  now stands down for simulation contexts so vanilla handles them.
+
+Verification
+- gradlew build passes; unit tests green.
+- In-game check pending (user).
+
+[中文]
+
+修复
+- 修复管理机重建程序、刷新磁盘时的崩溃（OutputStatement#runEvenSplit 空指针）：
+  SFM 检查器（IncompleteIOProgramLinter）会用 ProgramContext#createSimulationContext
+  构造一个没有 manager 的模拟上下文来 tick 程序。原版 OutputStatement#tick 对这种上下文
+  会提前返回，而我们的 HEAD 注入抢在检查之前接管了执行。现在模拟上下文一律交还原版处理。
+
+验证
+- gradlew build 通过；单元测试通过。
+- 实机验证待用户执行。
+
+-------------------------------------------------------------------------------
 v1.1.0 — NeoForge 1.21.1
 -------------------------------------------------------------------------------
 
